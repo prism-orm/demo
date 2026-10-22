@@ -1,0 +1,5 @@
+<nav class="pager">
+    {% if paginator.page > 1 %}<a href="{{ path(route, {page: paginator.page - 1}) }}">← Previous</a>{% endif %}
+    <span>Page {{ paginator.page }} of {{ max(paginator.pageCount, 1) }} · {{ paginator.total }} in all</span>
+    {% if paginator.hasNext %}<a href="{{ path(route, {page: paginator.page + 1}) }}">Next →</a>{% endif %}
+</nav>

@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>Prism ERP demo</h1>
+    <p>A minimal ERP written with Prism alone: no Doctrine. Open the profiler panel to see the queries, the batch loads and the absence of N+1.</p>
+    <ul>
+        <li><a href="{{ path('customer_index') }}">Customers</a> and their orders</li>
+        <li><a href="{{ path('order_index') }}">Orders</a>, their lines and invoices</li>
+        <li><a href="{{ path('report_revenue') }}">Revenue by customer</a>, a grouped query projected into a DTO</li>
+    </ul>
+{% endblock %}

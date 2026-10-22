@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Prism ERP demo{% endblock %}</title>
+    <style>
+        body { font: 15px/1.5 system-ui, sans-serif; margin: 0; color: #1d2733; background: #f6f7f9; }
+        header { background: #1d2733; color: #fff; padding: 12px 24px; display: flex; gap: 24px; align-items: center; }
+        header a { color: #cfd8e3; text-decoration: none; } header strong { color: #fff; }
+        main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e3e7ec; }
+        td.amount, th.amount { text-align: right; font-variant-numeric: tabular-nums; }
+        .flash-success { background: #e3f5e8; padding: 8px 12px; } .flash-error { background: #fbe4e4; padding: 8px 12px; }
+        .pager { margin: 12px 0; display: flex; gap: 12px; }
+    </style>
+</head>
+<body>
+<header>
+    <strong>Prism ERP</strong>
+    <a href="{{ path('customer_index') }}">Customers</a>
+    <a href="{{ path('order_index') }}">Orders</a>
+    <a href="{{ path('report_revenue') }}">Revenue</a>
+</header>
+<main>
+    {% for type, messages in app.flashes %}{% for message in messages %}<p class="flash-{{ type }}">{{ message }}</p>{% endfor %}{% endfor %}
+    {% block body %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>Orders</h1>
+    <table>
+        <thead><tr><th>Reference</th><th>Customer</th><th>Placed</th><th>Invoice</th><th class="amount">Total</th></tr></thead>
+        <tbody>
+        {% for order in orders %}
+            <tr>
+                <td><a href="{{ path('order_show', {id: order.id}) }}">{{ order.reference }}</a></td>
+                <td><a href="{{ path('customer_show', {id: order.customer.id}) }}">{{ order.customer.name }}</a></td>
+                <td>{{ order.placedAt|date('Y-m-d') }}</td>
+                <td>{{ order.invoice ? order.invoice.number : '—' }}</td>
+                <td class="amount">{{ order.total }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {{ include('_pager.html.twig', {paginator: orders, route: 'order_index'}) }}
+{% endblock %}

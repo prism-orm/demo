@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>Order {{ order.reference }}</h1>
+    <p><a href="{{ path('customer_show', {id: order.customer.id}) }}">{{ order.customer.name }}</a> · {{ order.placedAt|date('Y-m-d H:i') }} · {{ order.status }}</p>
+    <table>
+        <thead><tr><th>Product</th><th class="amount">Quantity</th><th class="amount">Unit price</th><th class="amount">Total</th></tr></thead>
+        <tbody>
+        {% for line in order.lines %}
+            <tr><td>{{ line.product.name }}</td><td class="amount">{{ line.quantity }}</td><td class="amount">{{ line.unitPrice }}</td><td class="amount">{{ line.total }}</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot><tr><th colspan="3">Total</th><th class="amount">{{ order.total }}</th></tr></tfoot>
+    </table>
+    <h2>Invoice</h2>
+    {% if order.invoice %}
+        <p>{{ order.invoice.number }}, issued {{ order.invoice.issuedAt|date('Y-m-d') }}: {{ order.invoice.total }} ({{ order.invoice.paid ? 'paid' : 'not paid' }})</p>
+    {% else %}
+        {{ form(form) }}
+    {% endif %}
+{% endblock %}

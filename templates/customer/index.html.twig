@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>Customers</h1>
+    <table>
+        <thead><tr><th>Name</th><th>Email</th><th>City</th></tr></thead>
+        <tbody>
+        {% for customer in customers %}
+            <tr><td><a href="{{ path('customer_show', {id: customer.id}) }}">{{ customer.name }}</a></td><td>{{ customer.email }}</td><td>{{ customer.city }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {{ include('_pager.html.twig', {paginator: customers, route: 'customer_index'}) }}
+{% endblock %}

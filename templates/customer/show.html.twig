@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>{{ customer.name }}</h1>
+    <p>{{ customer.email }} · {{ customer.city ?? '—' }}</p>
+    <h2>Orders</h2>
+    <table>
+        <thead><tr><th>Reference</th><th>Placed</th><th>Status</th><th class="amount">Total</th></tr></thead>
+        <tbody>
+        {% for order in customer.orders %}
+            <tr><td><a href="{{ path('order_show', {id: order.id}) }}">{{ order.reference }}</a></td><td>{{ order.placedAt|date('Y-m-d') }}</td><td>{{ order.status }}</td><td class="amount">{{ order.total }}</td></tr>
+        {% else %}
+            <tr><td colspan="4">No order.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

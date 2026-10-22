@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <h1>Revenue by customer</h1>
+    <table>
+        <thead><tr><th>Customer</th><th class="amount">Invoices</th><th class="amount">Total</th><th>Last invoice</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+            <tr><td>{{ row.customer }}</td><td class="amount">{{ row.invoices }}</td><td class="amount">{{ row.total }}</td><td>{{ row.lastInvoice ? row.lastInvoice|date('Y-m-d') : '—' }}</td></tr>
+        {% else %}
+            <tr><td colspan="4">No invoice yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
