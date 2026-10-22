@@ -33,6 +33,11 @@ final readonly class SeedCommand
         #[Option('Number of customers')] int $customers = 50,
         #[Option('Number of orders')] int $orders = 500,
     ): int {
+        if (0 < $this->em->getRepository(Customer::class)->count()) {
+            $io->note('The demo database already has its data: nothing to do.');
+
+            return 0;
+        }
         mt_srand(42);
 
         $products = [];

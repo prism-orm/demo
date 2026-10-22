@@ -27,3 +27,15 @@ make demo-test          # les tests de la démo (base prism_demo_test)
 Toutes les requêtes passent par le QueryBuilder typé : aucune chaîne de nom de champ dans `src/` (vérifié par `NoFieldNameStringTest`). Les entités ont été créées avec `make:entity`, le schéma avec `make:migration`.
 
 Les tests utilisent `prism-orm/test-pack` : factories, `ResetDatabase` et `assertQueryCount()`, qui garde le N+1 hors des pages.
+
+## En mode worker (FrankenPHP)
+
+```bash
+make worker-test            # 10 000 requêtes sur un seul worker, mémoire mesurée
+docker compose --profile demo up -d frankenphp   # la démo sur http://localhost:8088 (PRISM_DEMO_PORT)
+```
+
+`tools/worker/load.php` mêle lectures et créations de factures, puis vérifie : aucune requête en échec, un seul processus worker, une identity map vide et aucune transaction ouverte au début de chaque requête (RG-07.5), et une mémoire qui ne croît pas de plus de 1 Mo après les 1 000 premières requêtes. Les mesures viennent des en-têtes `X-Prism-*` de `WorkerProbe`, actifs seulement avec `PRISM_WORKER_PROBE=1`.
+
+Mesuré le 2026-10-22 : 10 000 requêtes en 10,4 s (962 req/s), 334 écritures, mémoire du worker stable à 1,07 Mo de la 1 000ᵉ à la 10 000ᵉ requête (−6,8 Ko). Contre-essai : sans la remise à zéro de l'EntityManager, le test échoue (2 993 requêtes sur 3 000 trouvent l'identity map pleine).
+
