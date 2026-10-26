@@ -11,6 +11,9 @@ use Prism\Orm\Collection\ArrayCollection;
 use Prism\Orm\Collection\Collection;
 
 #[Prism\Entity(repositoryClass: OrderRepository::class)]
+#[Prism\Tenanted]
+#[Prism\Timestampable]
+#[Prism\Blameable]
 final class Order
 {
     #[Prism\Id, Prism\GeneratedValue]
@@ -24,6 +27,18 @@ final class Order
 
     #[Prism\Column(length: 20)]
     public string $status;
+
+    #[Prism\Column]
+    public \DateTimeImmutable $createdAt;
+
+    #[Prism\Column]
+    public ?\DateTimeImmutable $updatedAt = null;
+
+    #[Prism\Column(length: 180)]
+    public ?string $createdBy = null;
+
+    #[Prism\Column(length: 180)]
+    public ?string $updatedBy = null;
 
     #[Prism\ManyToOne(inversedBy: 'orders')]
     public Customer $customer;

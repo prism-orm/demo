@@ -23,7 +23,8 @@ final class ReportTest extends AppWebTestCase
         InvoiceFactory::new(['total' => '20.00', 'order' => OrderFactory::new(['customer' => $alan])])->create();
         self::forgetFixtures();
 
-        $this->assertQueryCount(1, static fn () => $client->request('GET', '/reports/revenue'));
+        // la société du sous-domaine, puis le rapport en une requête
+        $this->assertQueryCount(2, static fn () => $client->request('GET', '/reports/revenue'));
 
         $rows = $client->getCrawler()->filter('tbody tr')->each(static fn ($row): string => implode(' ', $row->filter('td')->each(static fn ($cell): string => trim($cell->text()))));
         self::assertSame(['Ada 2 150.50 2026-03-02', 'Alan 1 20.00 2026-03-02'], $rows);

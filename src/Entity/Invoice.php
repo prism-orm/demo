@@ -8,7 +8,10 @@ use App\Repository\InvoiceRepository;
 use Prism\Bundle\Validator\UniqueEntity;
 use Prism\Orm\Mapping as Prism;
 
+// le journal d'audit garde chaque émission et chaque paiement (RG-08.10)
 #[Prism\Entity(repositoryClass: InvoiceRepository::class)]
+#[Prism\Tenanted]
+#[Prism\Auditable]
 #[UniqueEntity(fields: ['number'])]
 final class Invoice
 {

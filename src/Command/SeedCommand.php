@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\Company;
 use App\Entity\Customer;
 use App\Entity\Invoice;
 use App\Entity\Order;
@@ -11,20 +12,25 @@ use App\Entity\OrderLine;
 use App\Entity\Product;
 use App\Money;
 use Prism\Orm\EntityManagerInterface;
+use Prism\Orm\Tenancy\TenantContext;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Un jeu de données de démonstration : clients, produits, commandes et leurs lignes, factures
- * pour une partie des commandes. Déterministe (mt_srand) : deux démos montrent les mêmes chiffres.
+ * Un jeu de données de démonstration : deux sociétés (acme.localhost et globex.localhost), un
+ * catalogue commun, et pour chaque société ses clients, commandes et leurs lignes, factures pour
+ * une partie des commandes. Chaque société s'écrit dans son runAs() (pilier 3). Déterministe
+ * (mt_srand) : deux démos montrent les mêmes chiffres.
  */
 #[AsCommand('app:seed', 'Fill the demo database with customers, products, orders and invoices')]
 final readonly class SeedCommand
 {
     private const array CITIES = ['Paris', 'Lyon', 'Marseille', 'Lille', 'Nantes', 'Bordeaux', 'Toulouse'];
 
-    public function __construct(private EntityManagerInterface $em)
+    private const array COMPANIES = ['acme' => 'Acme Industries', 'globex' => 'Globex Corporation'];
+
+    public function __construct(private EntityManagerInterface $em, private TenantContext $tenants)
     {
     }
 
@@ -33,33 +39,70 @@ final readonly class SeedCommand
         #[Option('Number of customers')] int $customers = 50,
         #[Option('Number of orders')] int $orders = 500,
     ): int {
-        if (0 < $this->em->getRepository(Customer::class)->count()) {
+        // le registre des sociétés n'est pas tenanté : il se lit sans tenant
+        if (0 < $this->em->getRepository(Company::class)->count()) {
             $io->note('The demo database already has its data: nothing to do.');
 
             return 0;
         }
         mt_srand(42);
 
-        $products = [];
-        for ($i = 1; $i <= 30; ++$i) {
-            $product = new Product();
-            $product->sku = \sprintf('SKU-%03d', $i);
-            $product->name = 'Product ' . $i;
-            $product->price = Money::fromCents(mt_rand(500, 50_000));
-            $this->em->persist($product);
-            $products[] = $product;
+        // le catalogue commun : des lignes sans tenant, écrites en mode système
+        $catalog = $this->tenants->runAsSystem(function (): array {
+            $products = [];
+            for ($i = 1; $i <= 30; ++$i) {
+                $products[] = $this->product(\sprintf('SKU-%03d', $i), 'Product ' . $i);
+            }
+            $this->em->flush();
+
+            return array_map(static fn (Product $p): int => (int) $p->id, $products);
+        });
+
+        foreach (self::COMPANIES as $slug => $name) {
+            $company = new Company();
+            $company->slug = $slug;
+            $company->name = $name;
+            $this->em->persist($company);
+            $this->em->flush();
+            $this->tenants->runAs((int) $company->id, fn () => $this->company($slug, $catalog, $customers, $orders));
         }
 
+        $io->success(\sprintf('%d companies; each with %d customers, %d orders and their lines, %d invoices; 30 shared products.', \count(self::COMPANIES), $customers, $orders, intdiv($orders, 3)));
+
+        return 0;
+    }
+
+    private function product(string $sku, string $name): Product
+    {
+        $product = new Product();
+        $product->sku = $sku;
+        $product->name = $name;
+        $product->price = Money::fromCents(mt_rand(500, 50_000));
+        $this->em->persist($product);
+
+        return $product;
+    }
+
+    /**
+     * Les données d'une société, dans son tenant : deux produits à elle, puis clients, commandes,
+     * lignes et factures.
+     *
+     * @param list<int> $catalog
+     */
+    private function company(string $slug, array $catalog, int $customers, int $orders): void
+    {
+        $own = [$this->product(strtoupper($slug) . '-1', ucfirst($slug) . ' service'), $this->product(strtoupper($slug) . '-2', ucfirst($slug) . ' support')];
         $people = [];
         for ($i = 1; $i <= $customers; ++$i) {
             $customer = new Customer();
             $customer->name = 'Customer ' . $i;
-            $customer->email = \sprintf('customer%d@example.test', $i);
+            $customer->email = \sprintf('customer%d@%s.example.test', $i, $slug);
             $customer->city = self::CITIES[$i % \count(self::CITIES)];
             $this->em->persist($customer);
             $people[] = $customer;
         }
         $this->em->flush();
+        $products = [...array_map(fn (int $id): Product => $this->em->getReference(Product::class, $id), $catalog), ...$own];
 
         $start = new \DateTimeImmutable('2026-01-01 09:00:00');
         for ($i = 1; $i <= $orders; ++$i) {
@@ -95,9 +138,6 @@ final readonly class SeedCommand
             }
         }
         $this->em->flush();
-
-        $io->success(\sprintf('%d customers, 30 products, %d orders and their lines, %d invoices.', $customers, $orders, intdiv($orders, 3)));
-
-        return 0;
+        $this->em->clear();
     }
 }

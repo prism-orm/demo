@@ -19,6 +19,8 @@ final class OrderPagesTest extends AppWebTestCase
      */
     private static function orders(int $count): void
     {
+        // après une requête, kernel.reset a oublié le tenant
+        self::company('acme');
         $customer = CustomerFactory::new()->create();
         for ($i = 0; $i < $count; ++$i) {
             $order = OrderFactory::new(['customer' => $customer])->create();
@@ -44,20 +46,20 @@ final class OrderPagesTest extends AppWebTestCase
     }
 
     /**
-     * Pilier 1 : une page de 20 commandes coûte 5 requêtes, quel que soit le nombre de commandes —
-     * la page, son compte, puis les factures, les clients et les lignes de toute la page par lot.
-     * (Une première page incomplète se passe du compte : 4.)
+     * Pilier 1 : une page de 20 commandes coûte 6 requêtes, quel que soit le nombre de commandes —
+     * la société du sous-domaine, la page, son compte, puis les factures, les clients et les
+     * lignes de toute la page par lot. (Une première page incomplète se passe du compte : 5.)
      */
     public function testListCostsTheSameNumberOfQueriesWhateverTheNumberOfOrders(): void
     {
         $client = static::createClient();
         self::orders(2);
-        $this->assertQueryCount(4, static fn () => $client->request('GET', '/orders'), message: 'a page that is not full knows its total');
+        $this->assertQueryCount(5, static fn () => $client->request('GET', '/orders'), message: 'a page that is not full knows its total');
 
         self::orders(19);
-        $this->assertQueryCount(5, static fn () => $client->request('GET', '/orders'));
+        $this->assertQueryCount(6, static fn () => $client->request('GET', '/orders'));
         self::orders(40);
-        $this->assertQueryCount(5, static fn () => $client->request('GET', '/orders'), message: 'no N+1: 61 orders, 20 on the page, still 5 queries');
+        $this->assertQueryCount(6, static fn () => $client->request('GET', '/orders'), message: 'no N+1: 61 orders, 20 on the page, still 6 queries');
     }
 
     public function testShowAndUnknownOrder(): void
@@ -87,6 +89,7 @@ final class OrderPagesTest extends AppWebTestCase
         $client->followRedirect();
         self::assertSelectorTextContains('main', 'Invoice INV-TEST-1 issued.');
         self::assertSelectorTextContains('main', '14.50 (not paid)');
+        self::company('acme');
         $em = static::getContainer()->get(EntityManagerInterface::class);
         \assert($em instanceof EntityManagerInterface);
         self::assertSame(1, $em->getRepository(Invoice::class)->count());
