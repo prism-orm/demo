@@ -11,6 +11,8 @@ use Prism\Orm\Collection\ArrayCollection;
 use Prism\Orm\Collection\Collection;
 
 #[Prism\Entity(repositoryClass: CustomerRepository::class)]
+#[Prism\Tenanted]
+#[Prism\SoftDeletable]
 #[UniqueEntity(fields: ['email'])]
 final class Customer
 {
@@ -25,6 +27,10 @@ final class Customer
 
     #[Prism\Column(length: 80)]
     public ?string $city = null;
+
+    // un client supprimé garde ses commandes et ses factures (RG-08.14)
+    #[Prism\Column]
+    public ?\DateTimeImmutable $deletedAt = null;
 
     /** @var Collection<int, Order> */
     #[Prism\OneToMany(targetEntity: Order::class, mappedBy: 'customer')]

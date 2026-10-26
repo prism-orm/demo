@@ -6,6 +6,13 @@ prism:
         dir: '%kernel.project_dir%/migrations'
         namespace: 'App\Migrations'
 
+    # Multi-tenancy (pilier 3) : une société par sous-domaine, acme.localhost ; le CompanyLoader
+    # traduit le sous-domaine en identifiant de la société.
+    tenancy:
+        resolver:
+            subdomain: localhost
+        loader: App\Tenancy\CompanyLoader
+
     # Mode worker (FrankenPHP, RoadRunner) : une connexion inactive depuis plus de N secondes
     # est testée au début d'une requête, et reconnectée si elle a été perdue (0 : à chaque requête).
     # connection_idle_ttl: 60

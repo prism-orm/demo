@@ -7,7 +7,9 @@ namespace App\Entity;
 use App\Repository\ProductRepository;
 use Prism\Orm\Mapping as Prism;
 
+// le catalogue commun (tenant NULL) et les produits propres à une société
 #[Prism\Entity(repositoryClass: ProductRepository::class)]
+#[Prism\Tenanted(global: true)]
 final class Product
 {
     #[Prism\Id, Prism\GeneratedValue]
