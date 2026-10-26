@@ -716,6 +716,16 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         },
  *     }>,
  *     connection_idle_ttl?: int|Param, // Worker mode (RG-07.5): seconds of inactivity after which a connection is checked at the start of a request, and reconnected if it was lost; 0 checks it on every request. // Default: 60
+ *     tenancy?: array{ // Multi-tenancy (ADR 0014): the tenant column, the raw SQL guard and how a request finds its tenant.
+ *         type?: "integer"|"bigint"|"uuid"|Param, // Type of the tenant_id column of every #[Tenanted] entity (RG-08.1). // Default: "integer"
+ *         guard?: "exception"|"log"|Param|null, // Raw SQL on a tenanted table without tenant condition (RG-08.7): "exception", or "log" (critical); by default, exception in debug, log otherwise. // Default: null
+ *         resolver?: array{ // How a request finds its tenant: one of header, subdomain, user; none: the application sets it on the TenantContext.
+ *             header?: scalar|Param|null, // Name of the header holding the tenant; only behind a gateway that sets it.
+ *             subdomain?: scalar|Param|null, // Domain under which the subdomain names the tenant: acme.example.com under example.com.
+ *             user?: bool|Param, // The logged-in user, a TenantAwareUserInterface.
+ *         },
+ *         loader?: scalar|Param|null, // Id of a TenantLoader service turning the identifier read (header, subdomain) into the tenant id; without it, the identifier itself (an integer for integer and bigint). // Default: null
+ *     },
  *     metamodel?: array{
  *         dir?: scalar|Param|null, // Directory of the generated metamodel (RG-05.2); each entity manager generates into <dir>/<name>. // Default: "%kernel.cache_dir%/prism/metamodel"
  *     },
