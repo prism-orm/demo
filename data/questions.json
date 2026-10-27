@@ -53,9 +53,9 @@
     {"question": "Clear the entity manager between two Messenger messages", "relevant": ["bundle/symfony#worker-mode-and-messenger"]},
     {"question": "Does Prism work with FrankenPHP worker mode?", "relevant": ["bundle/symfony#worker-mode-and-messenger", "reference/configuration#prism-connection-idle-ttl"]},
     {"question": "Configure two databases with two entity managers", "relevant": ["reference/configuration#prism-entity-managers-name-connection", "bundle/symfony#configure"]},
-    {"question": "Compute the embeddings of documents in the background with a queue", "relevant": ["bundle/symfony#embeddings", "reference/configuration#prism-embeddings-scheduler"]},
-    {"question": "Recompute the stale vectors from the command line", "relevant": ["bundle/commands#db-embeddings-compute", "bundle/commands#embeddings"]},
-    {"question": "Use Ollama or the OpenAI API to compute vectors", "relevant": ["bundle/symfony#embeddings", "reference/configuration#prism-embeddings-providers-name-openai-base-url"]},
+    {"question": "Compute the embeddings of documents in the background with a queue", "relevant": ["bundle/symfony#embeddings", "reference/configuration#prism-embeddings-scheduler", "guide/vector-search#keeping-embeddings-up-to-date"]},
+    {"question": "Recompute the stale vectors from the command line", "relevant": ["bundle/commands#db-embeddings-compute", "bundle/commands#embeddings", "guide/vector-search#keeping-embeddings-up-to-date"]},
+    {"question": "Use Ollama or the OpenAI API to compute vectors", "relevant": ["bundle/symfony#embeddings", "reference/configuration#prism-embeddings-providers-name-openai-base-url", "guide/vector-search#keeping-embeddings-up-to-date"]},
     {"question": "My Doctrine entities use ORM\\Column, what changes?", "relevant": ["guide/from-doctrine#attributes", "guide/from-doctrine#an-entity-side-by-side"]},
     {"question": "Generate entities from an existing database", "relevant": ["bundle/commands#db-import"]},
     {"question": "Record stock movements and compute the stock level", "relevant": ["recipes/stock#movements-the-journal", "recipes/stock#the-level-sum-or-cache", "recipes/stock#moving-goods"]}
