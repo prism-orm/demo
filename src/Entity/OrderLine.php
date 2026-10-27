@@ -9,6 +9,7 @@ use App\Money;
 use Prism\Orm\Mapping as Prism;
 
 #[Prism\Entity(repositoryClass: OrderLineRepository::class)]
+#[Prism\Tenanted]
 final class OrderLine
 {
     #[Prism\Id, Prism\GeneratedValue]
