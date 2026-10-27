@@ -18,6 +18,22 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/Docs/{Entity,Section.php,Snapshot.php,SnapshotEmbeddingProvider.php,Questions.php,Evaluation.php}'
+
+    # la recherche documentaire (pilier 4) : vecteurs du snapshot de data/, Ollama pour les autres textes
+    App\Docs\DocsEmbeddings:
+        arguments:
+            $dataDir: '%kernel.project_dir%/data'
+            $baseUrl: '%env(EMBEDDING_BASE_URL)%'
+    app.embeddings.documents:
+        class: App\Docs\SnapshotEmbeddingProvider
+        factory: ['@App\Docs\DocsEmbeddings', 'documents']
+        autoconfigure: false
+    app.embeddings.queries:
+        class: App\Docs\SnapshotEmbeddingProvider
+        factory: ['@App\Docs\DocsEmbeddings', 'queries']
+        autoconfigure: false
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

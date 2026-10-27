@@ -1,10 +1,25 @@
 # Prism ORM : https://github.com/IMAMx39/prism
 prism:
-    url: '%env(resolve:DATABASE_URL)%'
-    entity_dirs: ['%kernel.project_dir%/src/Entity']
-    migrations:
-        dir: '%kernel.project_dir%/migrations'
-        namespace: 'App\Migrations'
+    # Deux bases : l'ERP (MySQL), et la recherche documentaire (PostgreSQL avec pgvector, pilier 4).
+    # Chaque EntityManager a ses entités et ses migrations.
+    connections:
+        default: { url: '%env(resolve:DATABASE_URL)%' }
+        docs: { url: '%env(resolve:DOCS_DATABASE_URL)%' }
+    entity_managers:
+        default:
+            entity_dirs: ['%kernel.project_dir%/src/Entity']
+            migrations: { dir: '%kernel.project_dir%/migrations', namespace: 'App\Migrations' }
+        docs:
+            entity_dirs: ['%kernel.project_dir%/src/Docs/Entity']
+            migrations: { dir: '%kernel.project_dir%/migrations/Docs', namespace: 'App\Migrations\Docs' }
+
+    # Pilier 4 : les vecteurs des sections (« default », celui de #[EmbeddedVector]) et des
+    # questions (« query »), un même modèle, nomic-embed-text. Sans Messenger, le scheduler est
+    # « deferred » : db:embeddings:compute --em=docs calcule les vecteurs périmés.
+    embeddings:
+        providers:
+            default: { service: app.embeddings.documents }
+            query: { service: app.embeddings.queries }
 
     # Multi-tenancy (pilier 3) : une société par sous-domaine, acme.localhost ; le CompanyLoader
     # traduit le sous-domaine en identifiant de la société.
@@ -17,13 +32,6 @@ prism:
     # est testée au début d'une requête, et reconnectée si elle a été perdue (0 : à chaque requête).
     # connection_idle_ttl: 60
 
-    # Plusieurs bases : la forme complète remplace url, entity_dirs et migrations.
-    # connections:
-    #     default: { url: '%env(resolve:DATABASE_URL)%' }
-    #     billing: { url: '%env(resolve:BILLING_DATABASE_URL)%' }
-    # entity_managers:
-    #     default: { entity_dirs: ['%kernel.project_dir%/src/Entity'] }
-    #     billing: { entity_dirs: ['%kernel.project_dir%/src/Billing/Entity'] }
 
 # Messenger : vider les EntityManagers et annuler une transaction restée ouverte entre deux messages
 # framework:

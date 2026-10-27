@@ -471,7 +471,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     disallow_search_engine_index?: bool|Param, // Enabled by default when debug is enabled. // Default: true
  *     http_client?: bool|array{ // HTTP Client configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *         max_host_connections?: int|Param, // The maximum number of connections to a single host.
  *         default_options?: array{
  *             headers?: array<string, mixed>,
@@ -725,6 +725,21 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             user?: bool|Param, // The logged-in user, a TenantAwareUserInterface.
  *         },
  *         loader?: scalar|Param|null, // Id of a TenantLoader service turning the identifier read (header, subdomain) into the tenant id; without it, the identifier itself (an integer for integer and bigint). // Default: null
+ *     },
+ *     embeddings?: array{ // Embeddings of the #[EmbeddedVector] fields (ADR 0018): the providers by name, and how the stale vectors are computed.
+ *         scheduler?: "auto"|"messenger"|"synchronous"|"deferred"|Param, // After the commit of a flush: "messenger" dispatches ComputeEmbedding, "synchronous" computes at once, "deferred" leaves it to db:embeddings:compute; "auto": messenger if a message bus exists, deferred otherwise. // Default: "auto"
+ *         batch_size?: int|Param, // Texts sent to a provider per call, ids per ComputeEmbedding message, and messages handled together. // Default: 64
+ *         providers?: array<string, array{ // Default: []
+ *             service?: scalar|Param|null, // Id of an EmbeddingProvider service. // Default: null
+ *             openai?: array{ // POST <base_url>/embeddings: OpenAI, Mistral, Ollama (/v1), vLLM, LocalAI, Text Embeddings Inference.
+ *                 base_url?: scalar|Param|null,
+ *                 model?: scalar|Param|null,
+ *                 dimensions?: int|Param,
+ *                 api_key?: scalar|Param|null, // Default: null
+ *                 send_dimensions?: bool|Param, // Send the dimension, for the models that reduce it (text-embedding-3-*). // Default: false
+ *                 prefix?: scalar|Param|null, // Put before each text: "search_document: " for nomic-embed-text. // Default: ""
+ *             },
+ *         }>,
  *     },
  *     metamodel?: array{
  *         dir?: scalar|Param|null, // Directory of the generated metamodel (RG-05.2); each entity manager generates into <dir>/<name>. // Default: "%kernel.cache_dir%/prism/metamodel"
