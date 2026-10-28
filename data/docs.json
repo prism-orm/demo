@@ -135,8 +135,8 @@
         {
             "path": "bundle/commands#db-import",
             "title": "Console commands › Mapping and tools › `db:import`",
-            "content": "Generates the entities of an existing database: one `final` class per table, strictly typed, with a `ManyToOne` (or a `OneToOne` if the column is unique) per foreign key. The mapping it writes is exact, so the first `db:migrations:diff` after the import is empty, apart from the reported approximations.\n\n- **Never overwrites** an existing file without `--force`.\n- **Reported, never silently approximated**:\n  - tables without a primary key or with a composite one (not imported);\n  - composite foreign keys, or foreign keys to a table that is not imported (kept as a column);\n  - join columns without an index or with a default;\n  - `ENUM` columns, read as a `string`.\n- **Always excluded**: `prism_*` and `doctrine_migration_versions`.\n\n| Option | Shortcut | Effect |\n| --- | --- | --- |\n| `--namespace` | | Namespace of the entities (default: `App\\Entity`) |\n| `--dir` | | Directory of the files (default: `src/Entity`) |\n| `--strip-prefix` | | Table prefix removed from the class names |\n| `--exclude` | | Regular expression of the tables to ignore; repeatable |\n| `--dry-run` | | Show the entities instead of writing them |\n| `--force` | `-f` | Replace existing files |\n\n```console\n$ vendor/bin/prism db:import --dry-run --namespace='App\\Imported' --exclude=invoice\n\nsrc/Entity/Customer.php\n-----------------------\n\n<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Imported;\n\nuse Prism\\Orm\\Mapping as Prism;\n\n// Importé par db:import depuis la table customer : à relire.\n#[Prism\\Entity]\n#[Prism\\Table('customer')]\n#[Prism\\UniqueConstraint(['email'], name: 'uniq_customer_45b166be')]\nfinal class Customer\n{\n    #[Prism\\Id, Prism\\GeneratedValue(Prism\\GenerationStrategy::Identity)]\n    public ?int $id = null;\n\n    #[Prism\\Column(length: 120)]\n    public string $name;\n\n    #[Prism\\Column(length: 180)]\n    public string $email;\n}\n\n [OK] 1 table(s) imported, 0 skipped. Review the entities, then run db:metamodel:generate.\n```",
-            "hash": "ec45dadd7fdfe976de9ecae4884c6bea0f581e4d"
+            "content": "Generates the entities of an existing database: one `final` class per table, strictly typed, with a `ManyToOne` (or a `OneToOne` if the column is unique) per foreign key. The mapping it writes is exact, so the first `db:migrations:diff` after the import is empty, apart from the reported approximations.\n\n- **Never overwrites** an existing file without `--force`.\n- **Reported, never silently approximated**:\n  - tables without a primary key or with a composite one (not imported);\n  - composite foreign keys, or foreign keys to a table that is not imported (kept as a column);\n  - join columns without an index or with a default;\n  - `ENUM` columns, read as a `string`.\n- **Always excluded**: `prism_*` and `doctrine_migration_versions`.\n\n| Option | Shortcut | Effect |\n| --- | --- | --- |\n| `--namespace` | | Namespace of the entities (default: `App\\Entity`) |\n| `--dir` | | Directory of the files (default: `src/Entity`) |\n| `--strip-prefix` | | Table prefix removed from the class names |\n| `--exclude` | | Regular expression of the tables to ignore; repeatable |\n| `--dry-run` | | Show the entities instead of writing them |\n| `--force` | `-f` | Replace existing files |\n\n```console\n$ vendor/bin/prism db:import --dry-run --namespace='App\\Imported' --exclude=invoice\n\nsrc/Entity/Customer.php\n-----------------------\n\n<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Imported;\n\nuse Prism\\Orm\\Mapping as Prism;\n\n// Imported by db:import from the table customer: review it.\n#[Prism\\Entity]\n#[Prism\\Table('customer')]\n#[Prism\\UniqueConstraint(['email'], name: 'uniq_customer_45b166be')]\nfinal class Customer\n{\n    #[Prism\\Id, Prism\\GeneratedValue(Prism\\GenerationStrategy::Identity)]\n    public ?int $id = null;\n\n    #[Prism\\Column(length: 120)]\n    public string $name;\n\n    #[Prism\\Column(length: 180)]\n    public string $email;\n}\n\n [OK] 1 table(s) imported, 0 skipped. Review the entities, then run db:metamodel:generate.\n```",
+            "hash": "41198397000f8c49926223d284e7c4479cbd545d"
         },
         {
             "path": "bundle/commands#db-metamodel-generate",
@@ -375,14 +375,14 @@
         {
             "path": "guide/from-doctrine#an-entity-side-by-side",
             "title": "Coming from Doctrine › An entity, side by side",
-            "content": "```php no-run [Doctrine]\nuse Doctrine\\Common\\Collections\\ArrayCollection;\nuse Doctrine\\Common\\Collections\\Collection;\nuse Doctrine\\DBAL\\Types\\Types;\nuse Doctrine\\ORM\\Mapping as ORM;\n\n#[ORM\\Entity(repositoryClass: InvoiceRepository::class)]\n#[ORM\\Table(name: 'invoices')]\n#[ORM\\Index(columns: ['issued_at'])]\nclass Invoice\n{\n    #[ORM\\Id, ORM\\GeneratedValue, ORM\\Column]\n    private ?int $id = null;\n\n    #[ORM\\Column(type: Types::DECIMAL, precision: 12, scale: 2)]\n    private string $total;\n\n    #[ORM\\Column(type: Types::DATETIME_IMMUTABLE)]\n    private \\DateTimeImmutable $issuedAt;\n\n    #[ORM\\ManyToOne(inversedBy: 'invoices')]\n    #[ORM\\JoinColumn(nullable: false, onDelete: 'CASCADE')]\n    private Customer $customer;\n\n    #[ORM\\OneToMany(targetEntity: InvoiceLine::class, mappedBy: 'invoice', cascade: ['persist'], orphanRemoval: true)]\n    #[ORM\\OrderBy(['position' => 'ASC'])]\n    private Collection $lines;\n\n    public function __construct()\n    {\n        $this->lines = new ArrayCollection();\n    }\n}\n```\n\n```php no-run [Prism]\nuse Prism\\Orm\\Collection\\ArrayCollection;\nuse Prism\\Orm\\Collection\\Collection;\nuse Prism\\Orm\\Mapping as Prism;\n\n#[Prism\\Entity(repositoryClass: InvoiceRepository::class)]\n#[Prism\\Table(name: 'invoices')]\n#[Prism\\Index(fields: ['issuedAt'])]\nfinal class Invoice\n{\n    #[Prism\\Id, Prism\\GeneratedValue]\n    private ?int $id = null;\n\n    #[Prism\\Column(type: 'decimal', precision: 12, scale: 2)]\n    private string $total;\n\n    #[Prism\\Column]\n    private \\DateTimeImmutable $issuedAt;\n\n    #[Prism\\ManyToOne(inversedBy: 'invoices', onDelete: Prism\\OnDelete::Cascade)]\n    private Customer $customer;\n\n    /** @var Collection<int, InvoiceLine> */\n    #[Prism\\OneToMany(targetEntity: InvoiceLine::class, mappedBy: 'invoice', cascade: [Prism\\Cascade::Persist], orphanRemoval: true)]\n    #[Prism\\OrderBy(['position' => Prism\\Order::Asc])]\n    private Collection $lines;\n\n    public function __construct()\n    {\n        $this->lines = new ArrayCollection();\n    }\n}\n```\n\nThe differences:\n\n- **No `#[ORM\\JoinColumn]`.** The foreign key options are parameters of the relation: `joinColumn`, `onDelete`, `foreignKey`. The nullability comes from the PHP type: `Customer` is `NOT NULL`, `?Customer` is nullable.\n- **Indexes name fields**, not columns: `fields: ['issuedAt']`, and they are repeatable attributes instead of a `Table` option.\n- **Enums instead of strings**: `Prism\\Cascade::Persist`, `Prism\\OnDelete::Cascade`, `Prism\\Order::Asc`.\n- **`#[Column]` deduces more**: `\\DateTimeImmutable` needs no type, an identifier needs no `#[Column]`.\n- **Collections** come from `Prism\\Orm\\Collection`, with the same `add()`, `removeElement()`, `contains()`, `toArray()`...\n- **The class can be `final`**: Prism generates no proxy class.",
-            "hash": "249ff859d275a836e4651e8a5a62a2130f29ed35"
+            "content": "```php no-run [Doctrine]\nuse Doctrine\\Common\\Collections\\ArrayCollection;\nuse Doctrine\\Common\\Collections\\Collection;\nuse Doctrine\\DBAL\\Types\\Types;\nuse Doctrine\\ORM\\Mapping as ORM;\n\n#[ORM\\Entity(repositoryClass: InvoiceRepository::class)]\n#[ORM\\Table(name: 'invoices')]\n#[ORM\\Index(columns: ['issued_at'])]\nclass Invoice\n{\n    #[ORM\\Id, ORM\\GeneratedValue, ORM\\Column]\n    private ?int $id = null;\n\n    #[ORM\\Column(type: Types::DECIMAL, precision: 12, scale: 2)]\n    private string $total;\n\n    #[ORM\\Column(type: Types::DATETIME_IMMUTABLE)]\n    private \\DateTimeImmutable $issuedAt;\n\n    #[ORM\\ManyToOne(inversedBy: 'invoices')]\n    #[ORM\\JoinColumn(nullable: false, onDelete: 'CASCADE')]\n    private Customer $customer;\n\n    #[ORM\\OneToMany(targetEntity: InvoiceLine::class, mappedBy: 'invoice', cascade: ['persist'], orphanRemoval: true)]\n    #[ORM\\OrderBy(['position' => 'ASC'])]\n    private Collection $lines;\n\n    public function __construct()\n    {\n        $this->lines = new ArrayCollection();\n    }\n}\n```\n\n```php no-run [Prism]\nuse Prism\\Dbal\\Query\\Order;\nuse Prism\\Orm\\Collection\\ArrayCollection;\nuse Prism\\Orm\\Collection\\Collection;\nuse Prism\\Orm\\Mapping as Prism;\n\n#[Prism\\Entity(repositoryClass: InvoiceRepository::class)]\n#[Prism\\Table(name: 'invoices')]\n#[Prism\\Index(fields: ['issuedAt'])]\nfinal class Invoice\n{\n    #[Prism\\Id, Prism\\GeneratedValue]\n    private ?int $id = null;\n\n    #[Prism\\Column(type: 'decimal', precision: 12, scale: 2)]\n    private string $total;\n\n    #[Prism\\Column]\n    private \\DateTimeImmutable $issuedAt;\n\n    #[Prism\\ManyToOne(inversedBy: 'invoices', onDelete: Prism\\OnDelete::Cascade)]\n    private Customer $customer;\n\n    /** @var Collection<int, InvoiceLine> */\n    #[Prism\\OneToMany(targetEntity: InvoiceLine::class, mappedBy: 'invoice', cascade: [Prism\\Cascade::Persist], orphanRemoval: true)]\n    #[Prism\\OrderBy(['position' => Order::Asc])]\n    private Collection $lines;\n\n    public function __construct()\n    {\n        $this->lines = new ArrayCollection();\n    }\n}\n```\n\nThe differences:\n\n- **No `#[ORM\\JoinColumn]`.** The foreign key options are parameters of the relation: `joinColumn`, `onDelete`, `foreignKey`. The nullability comes from the PHP type: `Customer` is `NOT NULL`, `?Customer` is nullable.\n- **Indexes name fields**, not columns: `fields: ['issuedAt']`, and they are repeatable attributes instead of a `Table` option.\n- **Enums instead of strings**: `Prism\\Cascade::Persist`, `Prism\\OnDelete::Cascade`, and `Order::Asc`: `Prism\\Dbal\\Query\\Order`, the same sort order as `findBy()`.\n- **`#[Column]` deduces more**: `\\DateTimeImmutable` needs no type, an identifier needs no `#[Column]`.\n- **Collections** come from `Prism\\Orm\\Collection`, with the same `add()`, `removeElement()`, `contains()`, `toArray()`...\n- **The class can be `final`**: Prism generates no proxy class.",
+            "hash": "2631322fc031a367fba078af9e8a607b84ad1b8a"
         },
         {
             "path": "guide/from-doctrine#attributes",
             "title": "Coming from Doctrine › Attributes",
-            "content": "| Doctrine | Prism |\n| --- | --- |\n| `#[ORM\\Entity]`, `#[ORM\\Table]` | `#[Prism\\Entity]`, `#[Prism\\Table]` |\n| `#[ORM\\Id]`, `#[ORM\\GeneratedValue]` | the same; `strategy: GenerationStrategy::UuidV7` for UUIDs |\n| `#[ORM\\Column(type: Types::...)]` | `#[Prism\\Column(type: '...')]`, often deduced |\n| `#[ORM\\JoinColumn]`, `#[ORM\\JoinColumns]` | `joinColumn:`, `onDelete:`, `foreignKey:` of the relation |\n| `#[ORM\\JoinTable]` | `#[Prism\\JoinTable]` |\n| `#[ORM\\ManyToOne]`, `#[ORM\\OneToMany]`, `#[ORM\\OneToOne]`, `#[ORM\\ManyToMany]` | the same names and parameters, `cascade` as enums |\n| `#[ORM\\OrderBy]` | `#[Prism\\OrderBy]`, with `Prism\\Order` cases |\n| `#[ORM\\Index]`, `#[ORM\\UniqueConstraint]` | the same, on fields |\n| `#[ORM\\Embeddable]`, `#[ORM\\Embedded]` | the same; a nullable embeddable is `null` when its columns are |\n| `#[ORM\\Version]` | `#[Prism\\Version]` |\n| `#[ORM\\HasLifecycleCallbacks]`, `#[ORM\\PrePersist]`... | the same names |\n| `#[ORM\\EntityListeners]` | `#[Prism\\EntityListeners]` |\n| `#[ORM\\InheritanceType]`, `#[ORM\\DiscriminatorMap]` | not supported in 1.0 |\n| `#[ORM\\Cache]` | not supported in 1.0 |\n\nThe [attribute reference](/reference/attributes) lists every parameter.",
-            "hash": "aae6ef2d43e63f92cdac76b947f8bd748e681890"
+            "content": "| Doctrine | Prism |\n| --- | --- |\n| `#[ORM\\Entity]`, `#[ORM\\Table]` | `#[Prism\\Entity]`, `#[Prism\\Table]` |\n| `#[ORM\\Id]`, `#[ORM\\GeneratedValue]` | the same; `strategy: GenerationStrategy::UuidV7` for UUIDs |\n| `#[ORM\\Column(type: Types::...)]` | `#[Prism\\Column(type: '...')]`, often deduced |\n| `#[ORM\\JoinColumn]`, `#[ORM\\JoinColumns]` | `joinColumn:`, `onDelete:`, `foreignKey:` of the relation |\n| `#[ORM\\JoinTable]` | `#[Prism\\JoinTable]` |\n| `#[ORM\\ManyToOne]`, `#[ORM\\OneToMany]`, `#[ORM\\OneToOne]`, `#[ORM\\ManyToMany]` | the same names and parameters, `cascade` as enums |\n| `#[ORM\\OrderBy]` | `#[Prism\\OrderBy]`, with `Prism\\Dbal\\Query\\Order` cases |\n| `#[ORM\\Index]`, `#[ORM\\UniqueConstraint]` | the same, on fields |\n| `#[ORM\\Embeddable]`, `#[ORM\\Embedded]` | the same; a nullable embeddable is `null` when its columns are |\n| `#[ORM\\Version]` | `#[Prism\\Version]` |\n| `#[ORM\\HasLifecycleCallbacks]`, `#[ORM\\PrePersist]`... | the same names |\n| `#[ORM\\EntityListeners]` | `#[Prism\\EntityListeners]` |\n| `#[ORM\\InheritanceType]`, `#[ORM\\DiscriminatorMap]` | not supported in 1.0 |\n| `#[ORM\\Cache]` | not supported in 1.0 |\n\nThe [attribute reference](/reference/attributes) lists every parameter.",
+            "hash": "70583ae54bcf5a5b675441062bdc170569a2529c"
         },
         {
             "path": "guide/from-doctrine#types",
@@ -885,8 +885,8 @@
         {
             "path": "guide/relations#sorting-and-indexing",
             "title": "Relations › One to many › Sorting and indexing",
-            "content": "```php no-run\n/** @var Collection<string, Product> */\n#[Prism\\ManyToMany(targetEntity: Product::class, indexBy: 'sku')]\n#[Prism\\OrderBy(['name' => Prism\\Order::Asc])]\npublic Collection $products;\n```\n\n`#[Prism\\OrderBy]` sorts a `OneToMany` or `ManyToMany` collection in SQL when it loads, and the order is kept when the collection is loaded in a batch. `indexBy` keys the collection by a field of the target: `$priceList->products['SKU-042']`.",
-            "hash": "5a5cf082782317c61c52367a3d554cdef8301141"
+            "content": "```php no-run\n/** @var Collection<string, Product> */\n#[Prism\\ManyToMany(targetEntity: Product::class, indexBy: 'sku')]\n#[Prism\\OrderBy(['name' => Order::Asc])]\npublic Collection $products;\n```\n\n`#[Prism\\OrderBy]` sorts a `OneToMany` or `ManyToMany` collection in SQL when it loads, with `Prism\\Dbal\\Query\\Order`, the sort order of `findBy()` and of the query builder, and the order is kept when the collection is loaded in a batch. `indexBy` keys the collection by a field of the target: `$priceList->products['SKU-042']`.",
+            "hash": "a1cac907c6e5fddf65fb0341ffafdf4da32d814b"
         },
         {
             "path": "guide/relations#one-to-one",
@@ -951,8 +951,8 @@
         {
             "path": "guide/vector-search#measures",
             "title": "Vector search › Measures",
-            "content": "The demo searches the Prism documentation: 324 sections, `nomic-embed-text:v1.5` vectors (768 dimensions) on PostgreSQL, and 60 questions annotated by hand with the sections that answer them (112 in all). `bin/console app:docs:evaluate` ranks the sections for each question:\n\n| Search | Recall@10 | MRR@10 |\n| --- | --- | --- |\n| `hybridSearch()` | **0.922** | 0.776 |\n| vector only | 0.903 | **0.807** |\n| full text only | 0.711 | 0.530 |\n\nThe hybrid search finds more of the relevant sections in its first ten results; the vector search alone more often puts the best one first. The corpus is small: these figures compare the three rankings with each other, they are not a public benchmark.\n\n`make bench-vector` loads 100,000 random vectors of 768 dimensions into MariaDB and PostgreSQL, then times `nearest(limit: 10)`, entities hydrated:\n\n| Database | `nearest()` p50 | p95 | Filtered to 1 % of the rows, p95 |\n| --- | --- | --- | --- |\n| MariaDB 11.8.6 | 21 ms | **22 ms** | 410 ms |\n| PostgreSQL 16, pgvector 0.8.7 | 27 ms | **31 ms** | 29 ms |\n\nMeasured on 2026-10-28: Intel Xeon Gold 5218, 8 cores, 7.7 GB of RAM shared with the other services, the databases in Docker; HNSW with `m = 16`, cosine distance; 200 searches to warm up, 200 measured, each with a new vector. The script is `tools/bench/vector-nearest.php`.\n\n- **Size the HNSW cache of MariaDB.** MariaDB keeps the graph in `mhnsw_max_cache_size`, 16 MB by default: far too little for 100,000 vectors of 768 dimensions, whose graph is then read again on each search. The benchmark sets it to 1 GB; with the default, the same search takes 65 ms at p95 and the index takes 23 minutes to build instead of 3.\n- **A selective filter costs more on MariaDB.** When a filter keeps few rows, the HNSW index of MariaDB returns too few of them, and Prism falls back to an exact search over the rows the filter keeps, through the index of the filtered column. Its cost grows with those rows and with the InnoDB buffer pool (128 MB here). PostgreSQL scans its index iteratively until it has enough rows. Index the column you filter on, as Prism does for `tenant_id`. The migration linter warns (L21) when a vector index is created on a tenanted table of MariaDB where one tenant, among others, has more than 10,000 rows.",
-            "hash": "cc29b6ded1d2a69a737bd6c1ffa2d4bd36b5ea6c"
+            "content": "The demo searches the Prism documentation: 324 sections, `nomic-embed-text:v1.5` vectors (768 dimensions) on PostgreSQL, and 60 questions annotated by hand with the sections that answer them (112 in all). `bin/console app:docs:evaluate` ranks the sections for each question:\n\n| Search | Recall@10 | MRR@10 |\n| --- | --- | --- |\n| `hybridSearch()` | **0.922** | 0.777 |\n| vector only | 0.903 | **0.807** |\n| full text only | 0.711 | 0.529 |\n\nThe hybrid search finds more of the relevant sections in its first ten results; the vector search alone more often puts the best one first. The corpus is small: these figures compare the three rankings with each other, they are not a public benchmark.\n\n`make bench-vector` loads 100,000 random vectors of 768 dimensions into MariaDB and PostgreSQL, then times `nearest(limit: 10)`, entities hydrated:\n\n| Database | `nearest()` p50 | p95 | Filtered to 1 % of the rows, p95 |\n| --- | --- | --- | --- |\n| MariaDB 11.8.6 | 21 ms | **22 ms** | 410 ms |\n| PostgreSQL 16, pgvector 0.8.7 | 27 ms | **31 ms** | 29 ms |\n\nMeasured on 2026-10-28: Intel Xeon Gold 5218, 8 cores, 7.7 GB of RAM shared with the other services, the databases in Docker; HNSW with `m = 16`, cosine distance; 200 searches to warm up, 200 measured, each with a new vector. The script is `tools/bench/vector-nearest.php`.\n\n- **Size the HNSW cache of MariaDB.** MariaDB keeps the graph in `mhnsw_max_cache_size`, 16 MB by default: far too little for 100,000 vectors of 768 dimensions, whose graph is then read again on each search. The benchmark sets it to 1 GB; with the default, the same search takes 65 ms at p95 and the index takes 23 minutes to build instead of 3.\n- **A selective filter costs more on MariaDB.** When a filter keeps few rows, the HNSW index of MariaDB returns too few of them, and Prism falls back to an exact search over the rows the filter keeps, through the index of the filtered column. Its cost grows with those rows and with the InnoDB buffer pool (128 MB here). PostgreSQL scans its index iteratively until it has enough rows. Index the column you filter on, as Prism does for `tenant_id`. The migration linter warns (L21) when a vector index is created on a tenanted table of MariaDB where one tenant, among others, has more than 10,000 rows.",
+            "hash": "2b20a6be21bb883f1b8dc9e253a6abcb61539e13"
         },
         {
             "path": "recipes/invoices",
@@ -1197,8 +1197,8 @@
         {
             "path": "reference/attributes#orderby",
             "title": "Attributes › Relations › `#[OrderBy]`",
-            "content": "The order of a `OneToMany` or `ManyToMany` collection, applied in SQL and kept by batch fetching.\n\n| Parameter | Default | Description |\n| --- | --- | --- |\n| `fields` | | Field → `Order::Asc` or `Order::Desc` (the `Prism\\Orm\\Mapping\\Order` enum): `['position' => Prism\\Order::Asc]` |",
-            "hash": "03f6b4c0fe65c417d085186ba1044143d33f4ac1"
+            "content": "The order of a `OneToMany` or `ManyToMany` collection, applied in SQL and kept by batch fetching.\n\n| Parameter | Default | Description |\n| --- | --- | --- |\n| `fields` | | Field → `Order::Asc` or `Order::Desc`, of `Prism\\Dbal\\Query\\Order`, the enum `findBy()` and the query builder take too: `['position' => Order::Asc]` |",
+            "hash": "c5f0af53a2b6d98343ca0e1e10ee082c8d3684d6"
         },
         {
             "path": "reference/attributes#haslifecyclecallbacks",
@@ -1587,8 +1587,8 @@
         {
             "path": "reference/events",
             "title": "Events",
-            "content": "Prism publishes typed PSR-14 events through the event dispatcher of each entity manager. In Symfony, listen to them with [`#[AsPrismListener]`](/reference/attributes#asprismlistener); without Symfony, pass any PSR-14 dispatcher to the `EntityManager`:\n\n```php no-run\n$em = new EntityManager($connection, $metadata, events: $dispatcher);\n```\n\nFor the events of one entity class, [lifecycle callbacks](/guide/mapping#lifecycle-callbacks) on the entity or [entity listeners](/reference/attributes#entitylisteners) are simpler: they receive the entity directly.\n\nAll events are in `Prism\\Orm\\Event`, except `NPlusOneDetected`, in `Prism\\Orm\\Debug`. Their properties are `readonly`.",
-            "hash": "f99e2b589e5e2442c5f0bdf0316e0c7772c9c377"
+            "content": "Prism publishes typed PSR-14 events through the event dispatcher of each entity manager. In Symfony, listen to them with [`#[AsPrismListener]`](/reference/attributes#asprismlistener); without Symfony, pass any PSR-14 dispatcher to the `EntityManager`:\n\n```php no-run\n$em = new EntityManager($connection, $metadata, events: $dispatcher);\n```\n\nFor the events of one entity class, [lifecycle callbacks](/guide/mapping#lifecycle-callbacks) on the entity or [entity listeners](/reference/attributes#entitylisteners) are simpler: they receive the entity directly.\n\nAll events are in `Prism\\Orm\\Event`, except `NPlusOneDetected`, in `Prism\\Orm\\Debug`. Their properties are `readonly`.\n\nThe `unitOfWork` property of an event is a `Prism\\Orm\\UnitOfWork\\FlushContext`: what a listener may see and do during a flush. It lists the entities to insert, update and delete (`getScheduledInsertions()`, `getScheduledUpdates()`, `getScheduledDeletions()`), tells whether anything would be written (`hasPendingChanges()`), gives the state of an entity (`contains()`, `getEntityState()`), and accepts `persist()` and `remove()` from `PreFlushEvent` or `OnFlushEvent`, which this same flush then writes. The rest of the unit of work is internal to Prism.",
+            "hash": "aacda09b54faf69d1336a5580800370a4b229ed3"
         },
         {
             "path": "reference/events#flush",
@@ -1599,44 +1599,44 @@
         {
             "path": "reference/events#preflushevent",
             "title": "Events › Flush › `PreFlushEvent`",
-            "content": "At the start of `flush()`, before any change is computed: an entity persisted or modified here is written by this flush.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "0490596570f60cf0cbf24868f0bfe6a6d1be31ed"
+            "content": "At the start of `flush()`, before any change is computed: an entity persisted or modified here is written by this flush.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "e83bb1ed1b3cf9c03149a58fca456f50c8cc6ca0"
         },
         {
             "path": "reference/events#onflushevent",
             "title": "Events › Flush › `OnFlushEvent`",
-            "content": "The changes are computed, before the transaction starts. `UnitOfWork::getScheduled*()` lists them; a change made here is included.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "abf47d1a466374230653f6d12d7bca198fa0990d"
+            "content": "The changes are computed, before the transaction starts. `FlushContext::getScheduled*()` lists them; a change made here is included.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "3b5a3a1d2cd6fb1e758750c17617edec2eab7046"
         },
         {
             "path": "reference/events#prepersistevent",
             "title": "Events › Flush › `PrePersistEvent`",
-            "content": "Before the `INSERT` of an entity, in the transaction of the flush; a change to the entity is inserted.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "00cd5a5d4e9f3db4361a0688faf6ad2396419191"
+            "content": "Before the `INSERT` of an entity, in the transaction of the flush; a change to the entity is inserted.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "8e325173fcde9de25ed7540d7308f3782c30a32f"
         },
         {
             "path": "reference/events#preupdateevent",
             "title": "Events › Flush › `PreUpdateEvent`",
-            "content": "Before the `UPDATE` of an entity; a change to the entity is included, and only that entity's changeset is computed again.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `changeSet` | `array<string, array{mixed, mixed}>` | Field → [old value, new value] |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "a32a0480732484ac8286a1ec46f8dabe381ee916"
+            "content": "Before the `UPDATE` of an entity; a change to the entity is included, and only that entity's changeset is computed again.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `changeSet` | `array<string, array{mixed, mixed}>` | Field → [old value, new value] |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "c282c00a67e7e3e8332ed2005e0b52c808bcff13"
         },
         {
             "path": "reference/events#postpersistevent",
             "title": "Events › Flush › `PostPersistEvent`",
-            "content": "After the commit of the flush that inserted the entity, never inside its transaction.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity, with its generated identifier |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "8c33d096f47f2562e404fb5482582ba4364251f8"
+            "content": "After the commit of the flush that inserted the entity, never inside its transaction.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity, with its generated identifier |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "b912b510f4c09614a1676db40c9e69c8c49966f5"
         },
         {
             "path": "reference/events#postupdateevent",
             "title": "Events › Flush › `PostUpdateEvent`",
-            "content": "After the commit of the flush that updated the entity.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "a2d6399abe03363e1380b2961f1cd166ce8b2c4c"
+            "content": "After the commit of the flush that updated the entity.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "bc5ac1b1eeb82bd504ed6cde5d7fb82737ed20d0"
         },
         {
             "path": "reference/events#postremoveevent",
             "title": "Events › Flush › `PostRemoveEvent`",
-            "content": "After the commit of the flush that deleted the entity.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "c3d35f0c8713f093a661c77d3cab951d93331e35"
+            "content": "After the commit of the flush that deleted the entity.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "d74cddf61addaba66119f510f308a17ae16605a7"
         },
         {
             "path": "reference/events#auditrecordedevent",
@@ -1647,38 +1647,38 @@
         {
             "path": "reference/events#postflushevent",
             "title": "Events › Flush › `PostFlushEvent`",
-            "content": "After the commit and the other `Post*` events; never after a failure.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "a95e30af8e5e275105750686030f676396b25487"
+            "content": "After the commit and the other `Post*` events; never after a failure.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "4b5ef084adbc301f9f95a0e175fa2cc10c50c651"
         },
         {
             "path": "reference/events#inversesidechangedevent",
             "title": "Events › Flush › `InverseSideChangedEvent`",
-            "content": "At flush, a collection on the inverse side of a relation changed without its owning side: nothing is written for that change. An added element does not point to the owner, or a removed one still does. The Symfony bundle logs it as a warning in development.\n\n| Property | Type | |\n| --- | --- | --- |\n| `owner` | `object` | The entity whose collection changed |\n| `field` | `string` | The collection property |\n| `element` | `object` | The element added or removed |\n| `added` | `bool` | `true` if added, `false` if removed |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "3f8312c7951395c4b9c1d3d87ddb6ec419049771"
+            "content": "At flush, a collection on the inverse side of a relation changed without its owning side: nothing is written for that change. An added element does not point to the owner, or a removed one still does. The Symfony bundle logs it as a warning in development.\n\n| Property | Type | |\n| --- | --- | --- |\n| `owner` | `object` | The entity whose collection changed |\n| `field` | `string` | The collection property |\n| `element` | `object` | The element added or removed |\n| `added` | `bool` | `true` if added, `false` if removed |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "a95acfbf9d27544eef88c17c47cde1172d537997"
         },
         {
             "path": "reference/events#preremoveevent",
             "title": "Events › Entities › `PreRemoveEvent`",
-            "content": "When `remove()` is called, before the entity is scheduled for deletion.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "da6af794b3b11ee7d0bce164c21f964cb835f096"
+            "content": "When `remove()` is called, before the entity is scheduled for deletion.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "0ca2e068d358821c826c62da4b38736ec5a8df93"
         },
         {
             "path": "reference/events#postloadevent",
             "title": "Events › Entities › `PostLoadEvent`",
-            "content": "After an entity is loaded from the database: `find()`, `findBy()`, `iterate()`, a reference that loads, `refresh()`. Never for an entity that the identity map returns.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "8c13cf88ecca9f96cef0ae2c69f24e20f37b6d44"
+            "content": "After an entity is loaded from the database: `find()`, `findBy()`, `iterate()`, a reference that loads, `refresh()`. Never for an entity that the identity map returns.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entity` | `object` | The entity |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "8d98d1d24e3d60ca1f5f4a234ebe5021b3ace9a7"
         },
         {
             "path": "reference/events#onclearevent",
             "title": "Events › Entities › `OnClearEvent`",
-            "content": "After `clear()`: every entity is detached.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "ca516b9e933ce071e371c370bc12916299453d20"
+            "content": "After `clear()`: every entity is detached.\n\n| Property | Type | |\n| --- | --- | --- |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "5549b7a72e4ab10d8a4e12895ba9afefcdd590c7"
         },
         {
             "path": "reference/events#batchloadedevent",
             "title": "Events › Diagnostics › `BatchLoadedEvent`",
-            "content": "A batch load: one query for a whole cohort. Published only when the batch holds at least two entities; the Symfony profiler shows them.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entityClass` | `class-string` | Without `association`: the class of the entities loaded together. With it: the class of the owners |\n| `association` | `?string` | `null` for referenced entities loaded together; otherwise the relation loaded for the owners (a collection, or the inverse side of a `OneToOne`) |\n| `count` | `int` | The number of entities, or of owners |\n| `unitOfWork` | `UnitOfWork` | |",
-            "hash": "aa2c5d1250d1a58ebe0acc29da550b610aade273"
+            "content": "A batch load: one query for a whole cohort. Published only when the batch holds at least two entities; the Symfony profiler shows them.\n\n| Property | Type | |\n| --- | --- | --- |\n| `entityClass` | `class-string` | Without `association`: the class of the entities loaded together. With it: the class of the owners |\n| `association` | `?string` | `null` for referenced entities loaded together; otherwise the relation loaded for the owners (a collection, or the inverse side of a `OneToOne`) |\n| `count` | `int` | The number of entities, or of owners |\n| `unitOfWork` | `FlushContext` | |",
+            "hash": "8b0285ca53a5a0048c32eef436b1437c0b153b28"
         },
         {
             "path": "reference/events#nplusonedetected",

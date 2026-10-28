@@ -43,9 +43,9 @@ La documentation de Prism (`website/`, `packages/*/docs`) est découpée en 324 
 
 | Recherche | Rappel@10 | MRR@10 |
 | --- | --- | --- |
-| `hybridSearch()` (RRF, k = 60, poids 1 et 1) | **0,922** | 0,776 |
+| `hybridSearch()` (RRF, k = 60, poids 1 et 1) | **0,922** | 0,777 |
 | vectorielle seule | 0,903 | 0,807 |
-| plein texte seul (`ts_rank_cd`, un OU sur les mots) | 0,711 | 0,530 |
+| plein texte seul (`ts_rank_cd`, un OU sur les mots) | 0,711 | 0,529 |
 
 Mesuré le 2026-10-28 sur PostgreSQL 16 et pgvector 0.8.7. L'hybride retrouve plus de sections pertinentes dans ses 10 premiers résultats ; le vectoriel seul place plus souvent la première pertinente en tête. Le corpus est petit : ces chiffres comparent les trois classements entre eux, ce n'est pas un banc d'essai public. Le rappel@10 de l'hybride au-dessus du vectoriel seul est vérifié par `DocsSearchTest`.
 
