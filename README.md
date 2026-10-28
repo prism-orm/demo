@@ -31,7 +31,7 @@ Les tests utilisent `prism-orm/test-pack` : factories, `ResetDatabase` et `asser
 
 ## Recherche documentaire (pilier 4)
 
-La documentation de Prism (`website/`, `packages/*/docs`) est découpée en 313 sections, une par titre de niveau 2 ou 3. Elles vivent dans une seconde base, PostgreSQL avec pgvector, derrière un second EntityManager, `docs` : l'ERP reste sur MySQL, qui n'a pas de type vector.
+La documentation de Prism (`website/`, `packages/*/docs`) est découpée en 324 sections, une par titre de niveau 2 ou 3. Elles vivent dans une seconde base, PostgreSQL avec pgvector, derrière un second EntityManager, `docs` : l'ERP reste sur MySQL, qui n'a pas de type vector.
 
 - `DocSection` porte `#[EmbeddedVector(source: ['title', 'content'])]` : une section chargée ou modifiée est périmée, `db:embeddings:compute --em=docs` calcule son vecteur.
 - Les vecteurs viennent de `nomic-embed-text:v1.5` (768 dimensions, Apache 2.0), calculés une fois par Ollama et versionnés dans `data/` (`docs.json`, `vectors.f32`). Le fournisseur `SnapshotEmbeddingProvider` les rend sans réseau ; il n'appelle Ollama que pour un texte absent du snapshot, si `EMBEDDING_BASE_URL` est donnée. Sans elle, la page `/docs` répond aux questions du jeu annoté seulement, et le dit pour les autres.
@@ -39,15 +39,15 @@ La documentation de Prism (`website/`, `packages/*/docs`) est découpée en 313 
 
 ### Mesure : rappel@10 sur le jeu annoté
 
-`data/questions.json` : 60 questions écrites à la main, et pour chacune les sections qui y répondent (109 en tout). `bin/console app:docs:evaluate` classe les 313 sections pour chaque question, de trois façons, avec les vecteurs du snapshot :
+`data/questions.json` : 60 questions écrites à la main, et pour chacune les sections qui y répondent (112 en tout). `bin/console app:docs:evaluate` classe les 324 sections pour chaque question, de trois façons, avec les vecteurs du snapshot :
 
 | Recherche | Rappel@10 | MRR@10 |
 | --- | --- | --- |
-| `hybridSearch()` (RRF, k = 60, poids 1 et 1) | **0,931** | 0,768 |
-| vectorielle seule | 0,908 | 0,807 |
-| plein texte seul (`ts_rank_cd`, un OU sur les mots) | 0,725 | 0,522 |
+| `hybridSearch()` (RRF, k = 60, poids 1 et 1) | **0,922** | 0,776 |
+| vectorielle seule | 0,903 | 0,807 |
+| plein texte seul (`ts_rank_cd`, un OU sur les mots) | 0,719 | 0,531 |
 
-Mesuré le 2026-10-27 sur PostgreSQL 16 et pgvector 0.8.7. L'hybride retrouve plus de sections pertinentes dans ses 10 premiers résultats ; le vectoriel seul place plus souvent la première pertinente en tête. Le corpus est petit : ces chiffres comparent les trois classements entre eux, ce n'est pas un banc d'essai public. Le rappel@10 de l'hybride au-dessus du vectoriel seul est vérifié par `DocsSearchTest`.
+Mesuré le 2026-10-28 sur PostgreSQL 16 et pgvector 0.8.7. L'hybride retrouve plus de sections pertinentes dans ses 10 premiers résultats ; le vectoriel seul place plus souvent la première pertinente en tête. Le corpus est petit : ces chiffres comparent les trois classements entre eux, ce n'est pas un banc d'essai public. Le rappel@10 de l'hybride au-dessus du vectoriel seul est vérifié par `DocsSearchTest`.
 
 ## En mode worker (FrankenPHP)
 

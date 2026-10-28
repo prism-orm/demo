@@ -6,6 +6,7 @@ namespace App\Tests\Docs;
 
 use App\Docs\Evaluation;
 use App\Docs\Questions;
+use App\Docs\Snapshot;
 use App\Tests\AppWebTestCase;
 use Prism\Orm\EntityManagerInterface;
 use Prism\Orm\Vector\EmbeddingProviderRegistry;
@@ -28,10 +29,15 @@ final class DocsSearchTest extends AppWebTestCase
         return $tester->getDisplay();
     }
 
+    private static function sections(): int
+    {
+        return \count(Snapshot::load(\dirname(__DIR__, 2) . '/data')->sections);
+    }
+
     private static function load(): void
     {
-        self::assertStringContainsString('313 section(s) inserted', self::command('app:docs:load'));
-        self::assertStringContainsString('313 vector(s) computed', self::command('db:embeddings:compute', ['--em' => 'docs']));
+        self::assertStringContainsString(self::sections() . ' section(s) inserted', self::command('app:docs:load'));
+        self::assertStringContainsString(self::sections() . ' vector(s) computed', self::command('db:embeddings:compute', ['--em' => 'docs']));
     }
 
     public function testHybridSearchBeatsVectorSearchOnTheAnnotatedQuestions(): void
@@ -72,12 +78,13 @@ final class DocsSearchTest extends AppWebTestCase
         self::createClient();
         self::load();
         $status = self::command('db:embeddings:status', ['--em' => 'docs']);
-        self::assertMatchesRegularExpression('/DocSection::\$embedding\s+313\s+0\s+nomic-embed-text:v1\.5: 313/', $status);
+        $n = self::sections();
+        self::assertMatchesRegularExpression('/DocSection::\$embedding\s+' . $n . '\s+0\s+nomic-embed-text:v1\.5: ' . $n . '/', $status);
         $em = static::getContainer()->get('prism.entity_manager.docs');
         \assert($em instanceof EntityManagerInterface);
 
-        self::assertSame(313, $em->getRepository(\App\Docs\Entity\DocSection::class)->markEmbeddingsStale('embedding'));
-        self::assertMatchesRegularExpression('/DocSection::\$embedding\s+0\s+313/', self::command('db:embeddings:status', ['--em' => 'docs']));
-        self::assertStringContainsString('313 vector(s) computed', self::command('db:embeddings:compute', ['--em' => 'docs']));
+        self::assertSame($n, $em->getRepository(\App\Docs\Entity\DocSection::class)->markEmbeddingsStale('embedding'));
+        self::assertMatchesRegularExpression('/DocSection::\$embedding\s+0\s+' . $n . '/', self::command('db:embeddings:status', ['--em' => 'docs']));
+        self::assertStringContainsString($n . ' vector(s) computed', self::command('db:embeddings:compute', ['--em' => 'docs']));
     }
 }
