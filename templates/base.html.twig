@@ -22,6 +22,7 @@
     <a href="{{ path('customer_index') }}">Customers</a>
     <a href="{{ path('order_index') }}">Orders</a>
     <a href="{{ path('report_revenue') }}">Revenue</a>
+    <a href="{{ path('docs_search') }}">Docs search</a>
 </header>
 <main>
     {% for type, messages in app.flashes %}{% for message in messages %}<p class="flash-{{ type }}">{{ message }}</p>{% endfor %}{% endfor %}
