@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Search the documentation · Prism ERP demo{% endblock %}
+
+{% block body %}
+    <h1>Search the documentation</h1>
+    <p>Each section of the Prism documentation has a vector (nomic-embed-text). <code>hybridSearch()</code> fuses the full-text ranking and the vector ranking (Reciprocal Rank Fusion).</p>
+
+    <form method="get" action="{{ path('docs_search') }}">
+        <input type="search" name="q" value="{{ query }}" size="70" placeholder="How do I avoid N+1 queries?" autofocus>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if error %}<p class="flash-error">{{ error }}</p>{% endif %}
+
+    {% if results is not empty %}
+        <table>
+            <thead><tr><th>#</th><th>Section</th><th class="amount">Score</th><th class="amount">Text rank</th><th class="amount">Vector rank</th></tr></thead>
+            <tbody>
+            {% for hit in results %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ hit.entity.title }}</strong><br><small><code>{{ hit.entity.path }}</code></small><br>{{ hit.entity.content|length > 240 ? hit.entity.content|slice(0, 240) ~ '…' : hit.entity.content }}</td>
+                    <td class="amount">{{ '%.4f'|format(hit.score) }}</td>
+                    <td class="amount">{{ hit.textRank ?? '–' }}</td>
+                    <td class="amount">{{ hit.vectorRank ?? '–' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% elseif query and not error %}
+        <p>No section found.</p>
+    {% endif %}
+
+    <h2>Sample questions</h2>
+    <ul>
+        {% for sample in samples %}<li><a href="{{ path('docs_search', {q: sample}) }}">{{ sample }}</a></li>{% endfor %}
+    </ul>
+{% endblock %}
