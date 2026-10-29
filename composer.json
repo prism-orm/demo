@@ -1,23 +1,25 @@
 {
+    "name": "prism-orm/demo",
+    "description": "A small ERP built with Prism ORM: batch fetching, typed queries, multi-tenancy, audit and hybrid documentation search",
     "type": "project",
-    "license": "proprietary",
-    "minimum-stability": "dev",
+    "license": "MIT",
+    "minimum-stability": "RC",
     "prefer-stable": true,
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "prism-orm/bundle": "*@dev",
-        "prism-orm/embedding-openai": "*@dev",
+        "prism-orm/bundle": "^1.0",
+        "prism-orm/embedding-openai": "^1.0",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
         "symfony/flex": "^2",
-        "symfony/form": "8.*",
+        "symfony/form": "^8.1.10",
         "symfony/framework-bundle": "8.1.*",
-        "symfony/http-client": "8.*",
+        "symfony/http-client": "^8.1.10",
         "symfony/runtime": "8.1.*",
         "symfony/twig-bundle": "8.*",
-        "symfony/validator": "8.*",
+        "symfony/validator": "^8.1.10",
         "symfony/yaml": "8.1.*",
         "twig/extra-bundle": "^2.12|^3.0",
         "twig/twig": "^2.12|^3.0"
@@ -74,16 +76,11 @@
             "require": "8.*"
         }
     },
-    "repositories": [{
-        "name": "prism",
-        "type": "path",
-        "url": "../packages/*"
-    }],
     "require-dev": {
         "phpunit/phpunit": "^11.5",
-        "prism-orm/test-pack": "*@dev",
-        "symfony/browser-kit": "8.*",
-        "symfony/css-selector": "8.*",
+        "prism-orm/test-pack": "^1.0",
+        "symfony/browser-kit": "^8.1.10",
+        "symfony/css-selector": "^8.1.10",
         "symfony/maker-bundle": "^1.68"
     }
 }

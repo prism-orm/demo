@@ -1,62 +1,57 @@
-# Prism ERP — démo
+# Prism ERP demo
 
-Un ERP minimal (clients, produits, commandes, lignes, factures) écrit avec **Prism seul** : aucun ORM ni DBAL Doctrine. Il sert d'exemple de référence du bundle Symfony, et de terrain pour le test du worker FrankenPHP.
+A small ERP (customers, products, orders, order lines, invoices) built with [Prism ORM](https://github.com/prism-orm/prism) alone, without Doctrine. Two companies, Acme and Globex, share one database, each on its own subdomain. It installs Prism from Packagist, exactly as your application would.
 
-Les paquets Prism viennent du monorepo (`../packages/*`, path repositories) : la démo suit le code en cours.
+## Run it
 
-## Lancer
-
-Depuis la racine du monorepo :
+You need Docker and `make`.
 
 ```bash
-make up                 # MySQL et les autres bases
-make demo-install       # composer install, bases prism_demo et prism_demo_docs, migrations, jeu de données, vecteurs
-make demo-test          # les tests de la démo (base prism_demo_test)
+git clone https://github.com/prism-orm/demo.git prism-demo && cd prism-demo
+make up        # builds the image, installs the dependencies, starts the app and its databases
+make install   # creates the databases, runs the migrations, loads the data and the documentation
 ```
 
-## Ce qu'elle montre
+Then open <http://acme.localhost:8000> and <http://globex.localhost:8000>. Browsers send `*.localhost` to your machine without any setup. If port 8000 is taken, start with `DEMO_PORT=8080 make up`.
 
-| Page | Prism |
+The app is served by FrankenPHP in worker mode: one PHP process serves every request.
+
+## What to look at
+
+| Page | What Prism does |
 | --- | --- |
-| `/customers` | `paginate()`, tri par le metamodel (`Customer_::as('c')`) |
-| `/customers/{id}` | `{id}` → entité (`EntityValueResolver`), collection chargée au premier accès |
-| `/orders` | 20 commandes, leur client, leur facture et leurs lignes en **5 requêtes**, quel que soit le nombre de commandes (batch fetching, pilier 1) |
-| `/orders/{id}` | formulaire de facture : `#[UniqueEntity]`, transaction, montants en `decimal` sans flottant |
-| `/reports/revenue` | requête groupée projetée dans un DTO (`selectInto()`), une seule requête |
-| `/docs` | recherche dans la documentation de Prism : `hybridSearch()` sur PostgreSQL (pgvector), plein texte et vecteurs fusionnés, rangs affichés (pilier 4) |
+| `/customers` | Pagination, sorting through the generated metamodel (`Customer_::as('c')`) |
+| `/customers/{id}` | `{id}` resolved to the entity; its orders loaded on first access |
+| `/orders` | 20 orders, their customer, invoice and lines in **5 queries**, whatever the number of orders: batch fetching |
+| `/orders/{id}` | Issuing an invoice: `#[UniqueEntity]`, a transaction, amounts as `decimal` strings, never floats |
+| `/reports/revenue` | A grouped query projected into a DTO (`selectInto()`), in one query |
+| `/docs` | Searching Prism's documentation with `hybridSearch()`: full text and vectors fused, both ranks shown |
 
-Toutes les requêtes passent par le QueryBuilder typé : aucune chaîne de nom de champ dans `src/` (vérifié par `NoFieldNameStringTest`). Les entités ont été créées avec `make:entity`, le schéma avec `make:migration`.
+Every company sees only its own customers, orders and invoices, and an unknown subdomain is a 404: the tenant filter fails closed. No query in `src/` names a field with a string; `NoFieldNameStringTest` checks it.
 
-Les tests utilisent `prism-orm/test-pack` : factories, `ResetDatabase` et `assertQueryCount()`, qui garde le N+1 hors des pages.
+## Documentation search
 
-## Recherche documentaire (pilier 4)
+The documentation search lives in a second database, PostgreSQL with pgvector, behind a second entity manager; the ERP stays on MySQL. Vectors do not work with MySQL: it has no vector distance nor vector index, so use MariaDB or PostgreSQL for them.
 
-La documentation de Prism (`website/`, `packages/*/docs`) est découpée en 324 sections, une par titre de niveau 2 ou 3. Elles vivent dans une seconde base, PostgreSQL avec pgvector, derrière un second EntityManager, `docs` : l'ERP reste sur MySQL, qui n'a pas de type vector.
+The 324 sections of the documentation and their vectors (`nomic-embed-text:v1.5`, 768 dimensions) are versioned in `data/`, so the search works offline. On 60 questions annotated by hand, `hybridSearch()` finds a relevant section in its first ten results more often than the vector search alone (recall@10: 0.922 against 0.903). `bin/console app:docs:evaluate` measures it again.
 
-- `DocSection` porte `#[EmbeddedVector(source: ['title', 'content'])]` : une section chargée ou modifiée est périmée, `db:embeddings:compute --em=docs` calcule son vecteur.
-- Les vecteurs viennent de `nomic-embed-text:v1.5` (768 dimensions, Apache 2.0), calculés une fois par Ollama et versionnés dans `data/` (`docs.json`, `vectors.f32`). Le fournisseur `SnapshotEmbeddingProvider` les rend sans réseau ; il n'appelle Ollama que pour un texte absent du snapshot, si `EMBEDDING_BASE_URL` est donnée. Sans elle, la page `/docs` répond aux questions du jeu annoté seulement, et le dit pour les autres.
-- La documentation change : `make embeddings-snapshot OLLAMA_URL=http://<hôte>:11434/v1` recalcule les textes changés. `SnapshotTest` échoue tant que le snapshot ne correspond plus aux pages.
-
-### Mesure : rappel@10 sur le jeu annoté
-
-`data/questions.json` : 60 questions écrites à la main, et pour chacune les sections qui y répondent (112 en tout). `bin/console app:docs:evaluate` classe les 324 sections pour chaque question, de trois façons, avec les vecteurs du snapshot :
-
-| Recherche | Rappel@10 | MRR@10 |
-| --- | --- | --- |
-| `hybridSearch()` (RRF, k = 60, poids 1 et 1) | **0,922** | 0,777 |
-| vectorielle seule | 0,903 | 0,807 |
-| plein texte seul (`ts_rank_cd`, un OU sur les mots) | 0,711 | 0,529 |
-
-Mesuré le 2026-10-28 sur PostgreSQL 16 et pgvector 0.8.7. L'hybride retrouve plus de sections pertinentes dans ses 10 premiers résultats ; le vectoriel seul place plus souvent la première pertinente en tête. Le corpus est petit : ces chiffres comparent les trois classements entre eux, ce n'est pas un banc d'essai public. Le rappel@10 de l'hybride au-dessus du vectoriel seul est vérifié par `DocsSearchTest`.
-
-## En mode worker (FrankenPHP)
+To index a newer version of the documentation, with an Ollama server that has `nomic-embed-text:v1.5`:
 
 ```bash
-make worker-test            # 10 000 requêtes sur un seul worker, mémoire mesurée
-docker compose --profile demo up -d frankenphp   # la démo sur http://localhost:8088 (PRISM_DEMO_PORT)
+make docs-snapshot PRISM=../prism OLLAMA_URL=http://<host>:11434/v1
 ```
 
-`tools/worker/load.php` mêle lectures et créations de factures, puis vérifie : aucune requête en échec, un seul processus worker, une identity map vide et aucune transaction ouverte au début de chaque requête (RG-07.5), et une mémoire qui ne croît pas de plus de 1 Mo après les 1 000 premières requêtes. Les mesures viennent des en-têtes `X-Prism-*` de `WorkerProbe`, actifs seulement avec `PRISM_WORKER_PROBE=1`.
+## Tests
 
-Mesuré le 2026-10-22 : 10 000 requêtes en 10,4 s (962 req/s), 334 écritures, mémoire du worker stable à 1,07 Mo de la 1 000ᵉ à la 10 000ᵉ requête (−6,8 Ko). Contre-essai : sans la remise à zéro de l'EntityManager, le test échoue (2 993 requêtes sur 3 000 trouvent l'identity map pleine).
+```bash
+make test          # the test suite, with prism-orm/test-pack: factories, ResetDatabase, assertQueryCount()
+make worker-test   # 10,000 requests on one worker: no failure, no leak, an empty identity map at each request
+```
 
+## Prism version
+
+The demo follows the latest Prism release, currently `1.0.0-RC1`. While 1.0 is a release candidate, `composer.json` sets `"minimum-stability": "RC"` with `"prefer-stable": true`, so that Composer accepts the release candidates of Prism's own packages.
+
+## License
+
+MIT

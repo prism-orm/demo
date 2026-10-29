@@ -4,28 +4,29 @@ declare(strict_types=1);
 
 namespace App\Tests\Docs;
 
-use App\Docs\DocChunker;
 use App\Docs\Questions;
 use App\Docs\Section;
 use App\Docs\Snapshot;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Le snapshot de data/ correspond à la documentation et au jeu de questions actuels (ADR 0018) :
- * une page modifiée sans make embeddings-snapshot échoue ici, sans réseau.
+ * Le snapshot de data/ est cohérent, sans réseau : un vecteur par section, chaque question avec
+ * le sien et des sections existantes. Il est tiré des pages d'une version de Prism et refait à
+ * chaque version mineure (make docs-snapshot PRISM=../prism, ADR 0023).
  */
 final class SnapshotTest extends TestCase
 {
     private const string DATA = __DIR__ . '/../../data';
 
-    public function testSectionsMatchTheDocumentation(): void
+    public function testEverySectionHasItsVector(): void
     {
         $snapshot = Snapshot::load(self::DATA);
-        $live = DocChunker::chunk(\dirname(__DIR__, 3));
-        $hash = static fn (Section $s): string => $s->path . ' ' . $s->hash();
 
-        self::assertSame(array_map($hash, $live), array_map($hash, $snapshot->sections), 'the documentation changed: run make embeddings-snapshot');
-        self::assertCount(\count($live), $snapshot->documents, 'one vector per distinct section');
+        self::assertNotSame([], $snapshot->sections);
+        foreach ($snapshot->sections as $section) {
+            self::assertArrayHasKey($section->hash(), $snapshot->documents, $section->path);
+            self::assertCount(Snapshot::DIMENSIONS, $snapshot->documents[$section->hash()]);
+        }
     }
 
     public function testQuestionsHaveTheirVectorAndExistingSections(): void

@@ -1,0 +1,41 @@
+# La démo et ses deux bases : make up, make install, puis http://acme.localhost:8000
+name: prism-demo
+
+services:
+    app:
+        build: docker/frankenphp
+        volumes:
+            - .:/app
+        working_dir: /app
+        environment:
+            SERVER_NAME: ':80'
+            # mode worker : un processus PHP sert toutes les requêtes (RG-07.5)
+            FRANKENPHP_CONFIG: 'worker ./public/index.php'
+            # en-têtes de mesure (mémoire, identity map) pour make worker-test
+            PRISM_WORKER_PROBE: '${PRISM_WORKER_PROBE:-0}'
+        ports: ["${DEMO_PORT:-8000}:80"]
+        depends_on:
+            mysql: { condition: service_healthy }
+            postgres: { condition: service_healthy }
+
+    # l'ERP
+    mysql:
+        image: mysql:8.4
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+            interval: 3s
+            retries: 30
+
+    # la recherche documentaire : le type vector de pgvector
+    postgres:
+        image: pgvector/pgvector:pg16
+        environment:
+            POSTGRES_USER: prism
+            POSTGRES_PASSWORD: prism
+            POSTGRES_DB: prism
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U prism -d prism"]
+            interval: 3s
+            retries: 30

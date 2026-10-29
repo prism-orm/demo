@@ -26,13 +26,19 @@ final readonly class DocsSnapshotCommand
         private DocsEmbeddings $embeddings,
         #[Autowire('%kernel.project_dir%/data')]
         private string $dataDir,
-        #[Autowire('%kernel.project_dir%/..')]
-        private string $monorepo,
     ) {
     }
 
-    public function __invoke(SymfonyStyle $io, #[Option('Recompute every vector, not only the changed texts')] bool $all = false): int
-    {
+    public function __invoke(
+        SymfonyStyle $io,
+        #[Option('Path of a clone of prism-orm/prism, whose website/ and packages/*/docs are indexed')] string $prism = '',
+        #[Option('Recompute every vector, not only the changed texts')] bool $all = false,
+    ): int {
+        if (!is_dir($prism . '/website')) {
+            $io->error('Pass a clone of prism-orm/prism: bin/console app:docs:snapshot --prism=../prism');
+
+            return 1;
+        }
         $documents = $this->embeddings->ollama(Snapshot::DOCUMENT_PREFIX);
         $queries = $this->embeddings->ollama(Snapshot::QUERY_PREFIX);
         if (null === $documents || null === $queries) {
@@ -40,7 +46,7 @@ final readonly class DocsSnapshotCommand
 
             return 1;
         }
-        $sections = DocChunker::chunk($this->monorepo);
+        $sections = DocChunker::chunk($prism);
         $questions = array_column(Questions::load($this->dataDir), 'question');
         $paths = array_flip(array_map(static fn (Section $s): string => $s->path, $sections));
         $unknown = array_diff(array_merge(...array_column(Questions::load($this->dataDir), 'relevant')), array_keys($paths));

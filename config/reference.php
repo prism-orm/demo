@@ -702,23 +702,23 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  * }
  * @psalm-type PrismConfig = array{
- *     default_entity_manager?: scalar|Param|null, // The entity manager behind EntityManagerInterface; the first declared one by default (RG-07.1). // Default: null
+ *     default_entity_manager?: scalar|Param|null, // The entity manager behind EntityManagerInterface; the first declared one by default. // Default: null
  *     connections?: array<string, array{ // Default: []
- *         url?: scalar|Param|null, // A Symfony-style database URL, with serverVersion (RG-00.2).
+ *         url?: scalar|Param|null, // A Symfony-style database URL, with serverVersion.
  *     }>,
  *     entity_managers?: array<string, array{ // Default: []
  *         connection?: scalar|Param|null, // The connection it uses; by default, the one with the same name. // Default: null
  *         entity_dirs?: list<scalar|Param|null>,
- *         batch_size?: int|Param, // Batch fetching: the most entities loaded by one IN query (RG-04.11). // Default: 100
+ *         batch_size?: int|Param, // Batch fetching: the most entities loaded by one IN query. // Default: 100
  *         migrations?: array{ // By default: migrations/ and App\Migrations for the default entity manager, migrations/<Name> and App\Migrations\<Name> for the others.
  *             dir?: scalar|Param|null, // Default: null
  *             namespace?: scalar|Param|null, // Default: null
  *         },
  *     }>,
- *     connection_idle_ttl?: int|Param, // Worker mode (RG-07.5): seconds of inactivity after which a connection is checked at the start of a request, and reconnected if it was lost; 0 checks it on every request. // Default: 60
- *     tenancy?: array{ // Multi-tenancy (ADR 0014): the tenant column, the raw SQL guard and how a request finds its tenant.
- *         type?: "integer"|"bigint"|"uuid"|Param, // Type of the tenant_id column of every #[Tenanted] entity (RG-08.1). // Default: "integer"
- *         guard?: "exception"|"log"|Param|null, // Raw SQL on a tenanted table without tenant condition (RG-08.7): "exception", or "log" (critical); by default, exception in debug, log otherwise. // Default: null
+ *     connection_idle_ttl?: int|Param, // Worker mode: seconds of inactivity after which a connection is checked at the start of a request, and reconnected if it was lost; 0 checks it on every request. // Default: 60
+ *     tenancy?: array{ // Multi-tenancy: the tenant column, the raw SQL guard and how a request finds its tenant.
+ *         type?: "integer"|"bigint"|"uuid"|Param, // Type of the tenant_id column of every #[Tenanted] entity. // Default: "integer"
+ *         guard?: "exception"|"log"|Param|null, // Raw SQL on a tenanted table without tenant condition: "exception", or "log" (critical); by default, exception in debug, log otherwise. // Default: null
  *         resolver?: array{ // How a request finds its tenant: one of header, subdomain, user; none: the application sets it on the TenantContext.
  *             header?: scalar|Param|null, // Name of the header holding the tenant; only behind a gateway that sets it.
  *             subdomain?: scalar|Param|null, // Domain under which the subdomain names the tenant: acme.example.com under example.com.
@@ -726,7 +726,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         },
  *         loader?: scalar|Param|null, // Id of a TenantLoader service turning the identifier read (header, subdomain) into the tenant id; without it, the identifier itself (an integer for integer and bigint). // Default: null
  *     },
- *     embeddings?: array{ // Embeddings of the #[EmbeddedVector] fields (ADR 0018): the providers by name, and how the stale vectors are computed.
+ *     embeddings?: array{ // Embeddings of the #[EmbeddedVector] fields: the providers by name, and how the stale vectors are computed.
  *         scheduler?: "auto"|"messenger"|"synchronous"|"deferred"|Param, // After the commit of a flush: "messenger" dispatches ComputeEmbedding, "synchronous" computes at once, "deferred" leaves it to db:embeddings:compute; "auto": messenger if a message bus exists, deferred otherwise. // Default: "auto"
  *         batch_size?: int|Param, // Texts sent to a provider per call, ids per ComputeEmbedding message, and messages handled together. // Default: 64
  *         providers?: array<string, array{ // Default: []
@@ -742,7 +742,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         }>,
  *     },
  *     metamodel?: array{
- *         dir?: scalar|Param|null, // Directory of the generated metamodel (RG-05.2); each entity manager generates into <dir>/<name>. // Default: "%kernel.cache_dir%/prism/metamodel"
+ *         dir?: scalar|Param|null, // Directory of the generated metamodel; each entity manager generates into <dir>/<name>. // Default: "%kernel.cache_dir%/prism/metamodel"
  *     },
  * }
  * @psalm-type TwigConfig = array{
